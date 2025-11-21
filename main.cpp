@@ -146,6 +146,72 @@ void* writer2(void* arg)
     return NULL;
 }
 
+
+// ============================
+// PROBLEM 3 — DINING PHILOSOPHERS (ASYMMETRIC)
+// ============================
+
+// 5 forks, each is a semaphore initialized to 1
+Semaphore fork0(1);
+Semaphore fork1(1);
+Semaphore fork2(1);
+Semaphore fork3(1);
+Semaphore fork4(1);
+
+// Array of pointers to these forks
+Semaphore* forks[5] = { &fork0, &fork1, &fork2, &fork3, &fork4 };
+
+void* philosopher3(void* arg)
+{
+    long id = (long)arg;   // philosopher ID: 0..4
+
+    int left  = (id + 4) % 5;  // left fork index (i-1 mod 5)
+    int right = id;            // right fork index (i)
+
+    // Let's allow each philosopher to eat 3 times
+    for (int k = 0; k < 3; k++) {
+
+        printf("[P3] Philosopher %ld is THINKING\n", id);
+        fflush(stdout);
+        sleep(1);
+
+        // Asymmetric fork picking rule:
+        if (id % 2 == 0) {
+            // EVEN philosopher: pick LEFT then RIGHT
+            forks[left]->wait();
+            printf("[P3] Philosopher %ld picked LEFT fork %d\n", id, left);
+            fflush(stdout);
+
+            forks[right]->wait();
+            printf("[P3] Philosopher %ld picked RIGHT fork %d\n", id, right);
+            fflush(stdout);
+        } else {
+            // ODD philosopher: pick RIGHT then LEFT
+            forks[right]->wait();
+            printf("[P3] Philosopher %ld picked RIGHT fork %d\n", id, right);
+            fflush(stdout);
+
+            forks[left]->wait();
+            printf("[P3] Philosopher %ld picked LEFT fork %d\n", id, left);
+            fflush(stdout);
+        }
+
+        // EAT
+        printf("[P3] Philosopher %ld is EATING\n", id);
+        fflush(stdout);
+        sleep(1);
+
+        // Put down forks
+        forks[left]->signal();
+        forks[right]->signal();
+        printf("[P3] Philosopher %ld put down both forks\n", id);
+        fflush(stdout);
+    }
+
+    return NULL;
+}
+
+
 // ============================
 // MAIN — RUNS SELECTED PROBLEM
 // ============================
@@ -196,6 +262,24 @@ int main(int argc, char **argv)
         }
         return 0;
     }
+
+        // --------- PROBLEM 3 ----------
+    if (problem == 3) {
+        printf("Running Problem 3: Dining Philosophers (Solution 1 - Asymmetric)\n");
+
+        pthread_t phil[5];
+
+        for (long i = 0; i < 5; i++) {
+            pthread_create(&phil[i], NULL, philosopher3, (void*)i);
+        }
+
+        for (int i = 0; i < 5; i++) {
+            pthread_join(phil[i], NULL);
+        }
+
+        return 0;
+    }
+
 
     printf("Problem %d not implemented yet.\n", problem);
     return 0;
