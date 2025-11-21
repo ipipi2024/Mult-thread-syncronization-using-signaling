@@ -1,6 +1,17 @@
 # Multi-thread Synchronization Using Signaling
 
-This project implements classic synchronization problems using POSIX semaphores and threads in C++.
+This project implements classic synchronization problems using POSIX semaphores and threads in C++. It demonstrates solutions to common concurrent programming challenges including readers-writers synchronization and the dining philosophers problem.
+
+## Overview
+
+The project contains four complete implementations:
+
+1. **No-Starve Readers-Writers** - Fair solution preventing writer starvation
+2. **Writer-Priority Readers-Writers** - Writers get priority over readers
+3. **Dining Philosophers (Asymmetric)** - Deadlock prevention using asymmetric fork picking
+4. **Dining Philosophers (Footman)** - Deadlock prevention using a resource limiter
+
+Each problem demonstrates different synchronization strategies and deadlock/starvation prevention techniques.
 
 ## Problems Implemented
 
@@ -112,6 +123,42 @@ Each philosopher eats 3 times in this implementation, demonstrating that the sol
 
 The output shows all 5 philosophers successfully thinking, picking up forks, eating, and putting down forks multiple times without deadlock. The asymmetric strategy ensures progress is always possible.
 
+### Problem 4: Dining Philosophers (Footman Solution)
+
+An alternative solution to the Dining Philosophers problem using a "footman" approach. The footman is represented by a semaphore that limits the number of philosophers who can attempt to pick up forks simultaneously.
+
+This implementation uses:
+
+- **5 Fork Semaphores**: One semaphore per fork, each initialized to 1
+- **Footman Semaphore**: Initialized to 4, allowing only 4 philosophers at the table at once
+
+#### How It Works
+
+**All Philosophers:**
+1. Think for a period
+2. Wait for the footman (get permission to enter dining room)
+3. Pick up LEFT fork
+4. Pick up RIGHT fork
+5. Eat
+6. Put down both forks
+7. Signal the footman (leave dining room)
+
+**Why This Prevents Deadlock:**
+
+By limiting the number of philosophers at the table to 4 (one less than the total number of philosophers), we guarantee that at least one philosopher can always acquire both forks. With only 4 philosophers at the table and 5 forks available, it's impossible for all seated philosophers to hold exactly one fork each.
+
+This solution is simpler than the asymmetric approach since all philosophers follow the same fork-picking pattern. The footman semaphore acts as a gatekeeper to ensure the system never enters a deadlock state.
+
+Each philosopher eats 3 times, demonstrating deadlock-free operation.
+
+#### Example Output
+
+![Footman Solution Output Part 1](footman-solution.png)
+
+![Footman Solution Output Part 2](footman-solution-2.png)
+
+The output shows philosophers requesting permission from the footman, entering the dining room, eating, and leaving. Notice how no more than 4 philosophers are in the dining room at any time, preventing deadlock.
+
 ## Building and Running
 
 ### Compilation
@@ -140,6 +187,11 @@ Run Problem 2 (Writer-Priority Readers-Writers):
 Run Problem 3 (Dining Philosophers - Asymmetric):
 ```bash
 ./cse4001_sync 3
+```
+
+Run Problem 4 (Dining Philosophers - Footman):
+```bash
+./cse4001_sync 4
 ```
 
 ### Cleaning
@@ -172,3 +224,10 @@ make clean
 - 5 fork semaphores (one per fork)
 - Each philosopher eats 3 times
 - Asymmetric fork-picking strategy to prevent deadlock
+
+**Problem 4:**
+- 5 philosopher threads
+- 5 fork semaphores (one per fork)
+- 1 footman semaphore (limits to 4 philosophers at table)
+- Each philosopher eats 3 times
+- Footman approach to prevent deadlock

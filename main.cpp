@@ -213,6 +213,55 @@ void* philosopher3(void* arg)
 
 
 // ============================
+// PROBLEM 4 — DINING PHILOSOPHERS (FOOTMAN)
+// ============================
+
+Semaphore footman(4);     // Only 4 philosophers allowed at once
+Semaphore fork_sem[5] = { Semaphore(1), Semaphore(1), Semaphore(1), Semaphore(1), Semaphore(1) };
+
+void* philosopher4(void* arg)
+{
+    long id = (long)arg;
+
+    int left  = (id + 4) % 5;
+    int right = id;
+
+    for (int k = 0; k < 3; k++) {
+
+        printf("[P4] Philosopher %ld is THINKING\n", id);
+        fflush(stdout);
+        sleep(1);
+
+        // STEP 1: Ask Footman
+        footman.wait();
+        printf("[P4] Philosopher %ld enters dining room\n", id);
+
+        // STEP 2: Pick up forks
+        fork_sem[left].wait();
+        printf("[P4] Philosopher %ld picked LEFT fork %d\n", id, left);
+
+        fork_sem[right].wait();
+        printf("[P4] Philosopher %ld picked RIGHT fork %d\n", id, right);
+
+        // STEP 3: Eat
+        printf("[P4] Philosopher %ld is EATING\n", id);
+        sleep(1);
+
+        // STEP 4: Put forks down
+        fork_sem[left].signal();
+        fork_sem[right].signal();
+        printf("[P4] Philosopher %ld put down both forks\n", id);
+
+        // STEP 5: Leave dining room
+        footman.signal();
+        printf("[P4] Philosopher %ld leaves dining room\n", id);
+    }
+
+    return NULL;
+}
+
+
+// ============================
 // MAIN — RUNS SELECTED PROBLEM
 // ============================
 
@@ -279,6 +328,23 @@ int main(int argc, char **argv)
 
         return 0;
     }
+
+    if (problem == 4) {
+    printf("Running Problem 4: Dining Philosophers (Footman)\n");
+
+    pthread_t phil[5];
+
+    for (long i = 0; i < 5; i++) {
+        pthread_create(&phil[i], NULL, philosopher4, (void*)i);
+    }
+
+    for (int i = 0; i < 5; i++) {
+        pthread_join(phil[i], NULL);
+    }
+
+    return 0;
+}
+
 
 
     printf("Problem %d not implemented yet.\n", problem);
